@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{fe640cb7-106b-4752-8982-fb7b769e24f3}</ItemsProjectGuid>
+    <ItemsProjectName>GL</ItemsProjectName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)include;</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\arraybuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\framebuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\gl.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\glad\glad.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\gl\glext.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\gl\wglext.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\KHR\khrplatform.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\texture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\arraybuffer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\framebuffer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\glad.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\shader.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\texture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)include\shader.inl" />
+  </ItemGroup>
+</Project>

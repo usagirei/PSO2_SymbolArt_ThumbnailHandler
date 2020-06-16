@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{4d630e64-0ddc-4b11-aaf0-9cab520b64e8}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)include;$(MSBuildThisFileDirectory)rsrc</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\blowfish.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\memorystream.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\debug.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\openglrenderer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\psr.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\renderer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\symbolart.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\stb.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\blowfish.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\config.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\memorystream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\debug.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\openglrenderer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\psr.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\renderer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\stb_image.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\stb_image_write.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\symbolart.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)rsrc\resource.h" />
+    <ResourceCompile Include="$(MSBuildThisFileDirectory)rsrc\Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)include\blowfish.inl" />
+    <None Include="$(MSBuildThisFileDirectory)include\memorystream.inl" />
+    <None Include="$(MSBuildThisFileDirectory)rsrc\Shader\default.fs" />
+    <None Include="$(MSBuildThisFileDirectory)rsrc\Shader\default.vs" />
+    <None Include="$(MSBuildThisFileDirectory)rsrc\atlas.png" />
+  </ItemGroup>
+</Project>
