@@ -16,7 +16,7 @@ public:
 	MemoryStream(uint8_t* data, size_t dataSize);
 
 	uint8_t& operator[](size_t pos);
-	operator uint8_t* ();
+	explicit operator uint8_t* ();
 
 	uint8_t* data();
 	size_t size();
