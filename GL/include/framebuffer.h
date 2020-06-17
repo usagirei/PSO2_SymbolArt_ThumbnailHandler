@@ -36,6 +36,6 @@ namespace gl {
 		char m_Msg[512];
 	public:
 		framebuffer_exception(const char* msg);
-		inline const char* message() { return m_Msg; }
+		inline const char* what() { return m_Msg; }
 	};
 }

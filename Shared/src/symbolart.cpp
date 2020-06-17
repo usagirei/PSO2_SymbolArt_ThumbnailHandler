@@ -64,9 +64,9 @@ SarFile::SarFile(IStream* stream)
 	DEBUG_SCOPE({
 		FILE * fp;
 		fopen_s(&fp, "dump.bin", "wb");
-		fwrite(sar, 1, sar.size(), fp);
+		fwrite((uint8_t*)sar, 1, sar.size(), fp);
 		fclose(fp);
-		});
+	});
 
 	DEBUG_HEXDUMP_E(m_Header);
 	DEBUG_BINDUMP_E(m_Header);

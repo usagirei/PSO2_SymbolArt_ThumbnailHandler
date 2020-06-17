@@ -67,5 +67,5 @@ class sar_exception : public std::exception {
 	char m_Msg[512];
 public:
 	sar_exception(const char* msg);
-	inline const char* message() { return m_Msg; }
+	inline const char* what() { return m_Msg; }
 };
