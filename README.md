@@ -23,28 +23,26 @@ You can use the included SarConvert application to test if the thumbnail handler
 
 * Grab the latest build from the releases page
 * Extract the zip file somewhere it won't be moved out of (like alongside your Tweaker/Game executable for instance)
+
+Then either
+
 * Run the provided install/remove script as administrator
 
-or
-<details>
-<summary>Manual Installation</summary>
+Or
 
-* Open a Command Prompt as Administrator 
+* Open a Command Prompt as administrator 
 * CD into the folder with the dll file
 * run `regsrv32 Pso2SarThumbnailHandler.x64.dll` or `regsrv32 Pso2SarThumbnailHandler.x86.dll` to install
 * run `regsrv32 /u Pso2SarThumbnailHandler.x64.dll` or `regsrv32 /u Pso2SarThumbnailHandler.x86.dll` to remove
-</details>
 
-
-</details>
 
 # SarConvert Utility
 
-Included in the release download, you can use it to test if the thumbnail handler should work, or simply to convert .sar files into .pngs
+Included in the release download, you can use it to test if the thumbnail handler should work, or simply to convert .sar files into .pngs for general use
 
 ### Usage:
 
-Droping one or more .sar files into the executable will create a 1:1 .png file of it, 
+Droping one or more .sar files into the executable will create a 1:1 (usually 192x96, or 32x32) .png file of it, 
 For precise size control, run it from a command prompt or script file
 
 Passing a number as parameter will change the out size for the subsequent arguments
