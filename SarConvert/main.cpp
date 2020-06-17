@@ -56,7 +56,7 @@ int wmain(int argc, LPCWSTR* argv)
 			wcscat_s(dstName, L".png");
 
 			IStream* tmp;
-			HRESULT hr = SHCreateStreamOnFileW(argv[1], STGM_READ, &tmp);
+			HRESULT hr = SHCreateStreamOnFileW(f, STGM_READ, &tmp);
 			if (!SUCCEEDED(hr)) {
 				std::cout << "Failed to Open SAR File";
 				continue;
