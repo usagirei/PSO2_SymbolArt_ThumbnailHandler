@@ -8,6 +8,8 @@
 # Windows 6.0 SDK - Thumbnail Handler Test App
 TestHandler/
 
+Shared/include/git_version.h
+
 # User-specific files
 *.rsuser
 *.suo
