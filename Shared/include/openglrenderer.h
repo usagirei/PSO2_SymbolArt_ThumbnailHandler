@@ -36,9 +36,9 @@ private:
 	gl::texture atlas;
 };
 
-class glrenderer_exception : public std::exception {
+class glrenderer_exception final : public std::exception {
 	char m_Msg[512];
 public:
 	glrenderer_exception(const char* msg);
-	inline const char* what() { return m_Msg; }
+	inline const char* what() const override { return m_Msg; }
 };

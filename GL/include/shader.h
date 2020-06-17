@@ -39,11 +39,11 @@ namespace gl {
 		std::unordered_map<uint64_t, uint32_t> m_Uniforms;
 	};
 
-	class shader_exception : public std::exception {
+	class shader_exception final : public std::exception {
 		char m_Msg[512];
 	public:
 		shader_exception(const char* msg);
-		inline const char* what() { return m_Msg; }
+		inline const char* what() const override { return m_Msg; }
 	};
 }
 
