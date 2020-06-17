@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SarConvert", "SarConvert\Sa
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shared", "Shared\Shared.vcxitems", "{4D630E64-0DDC-4B11-AAF0-9CAB520B64E8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pso2SarThumbnailHandler", "Handler\Handler.vcxproj", "{A47D186B-7233-4B1A-BB7D-5C9DC53BC137}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pso2SarThumbnailHandler", "SarThumbnailHandler\SarThumbnailHandler.vcxproj", "{A47D186B-7233-4B1A-BB7D-5C9DC53BC137}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GL", "GL\GL.vcxitems", "{FE640CB7-106B-4752-8982-FB7B769E24F3}"
 EndProject
