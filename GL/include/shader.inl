@@ -13,14 +13,14 @@ namespace gl {
 	inline void shader::_setUniform<glm::vec3>(const char* name, int count, const glm::vec3* value)
 	{
 		use();
-		glUniform2fv(getUniformLocation(name), count, glm::value_ptr(*value));
+		glUniform3fv(getUniformLocation(name), count, glm::value_ptr(*value));
 	}
 
 	template<>
 	inline void shader::_setUniform<glm::vec4>(const char* name, int count, const glm::vec4* value)
 	{
 		use();
-		glUniform2fv(getUniformLocation(name), count, glm::value_ptr(*value));
+		glUniform4fv(getUniformLocation(name), count, glm::value_ptr(*value));
 	}
 
 	template<>
