@@ -5,7 +5,6 @@
 
 template<typename T>
 inline T MemoryStream::read() {
-	//_ASSERT(m_ReadCursor + sizeof(T) <= m_Buf.size());
 	T val;
 	read(&val, 1);
 	return val;
@@ -14,7 +13,8 @@ inline T MemoryStream::read() {
 template<typename T>
 inline size_t MemoryStream::read(T* val, int count) {
 	size_t blksz = sizeof(T) * count;
-	size_t bytesLeft = m_Buf.size() - m_ReadCursor;
+	size_t bytesLeft = (m_Buf.size() - m_ReadCursor);
+	bytesLeft = (bytesLeft / sizeof(T)) * sizeof(T);
 	size_t bytesRead = __min(blksz, bytesLeft);
 
 	memcpy_s(val, bytesRead, rcursor(), bytesRead);

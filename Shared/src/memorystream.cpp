@@ -37,11 +37,6 @@ void MemoryStream::seek(int n, int mode)
 	wseek(n, mode);
 }
 
-void MemoryStream::readBytes(void* buf, int n) {
-	memcpy_s(buf, n, &m_Buf[m_ReadCursor], m_Buf.size() - m_ReadCursor);
-	rseek(n, SEEK_CUR);
-}
-
 bool MemoryStream::readBit() {
 	if (m_BitsLeft == 0) {
 		m_CurBit = read<uint8_t>();

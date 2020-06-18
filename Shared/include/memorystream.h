@@ -30,11 +30,9 @@ public:
 	void rseek(int n, int mode);
 
 	bool readBit();
-	void readBytes(void* buf, int n);
 
 	template<typename T>
 	T read();
-
 	template<typename T>
 	size_t read(T* val, int count);
 
@@ -47,7 +45,6 @@ public:
 
 	template<typename T>
 	size_t write(T value);
-
 	template<typename T>
 	size_t write(T* value, int count);
 
