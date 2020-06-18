@@ -11,6 +11,7 @@ void __consoleAttach() {
 	AllocConsole();
 	AttachConsole(GetCurrentProcessId());
 	freopen("CON", "w", stdout);
+	freopen("CON", "w", stderr);
 }
 
 void __bindump(const void* ptr, int num_bits, const char* expr)
