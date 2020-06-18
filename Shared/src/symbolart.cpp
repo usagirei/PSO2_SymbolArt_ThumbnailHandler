@@ -97,7 +97,7 @@ SarFile::SarFile(IStream* stream)
 	int nameLen = (sar.size() - sar.rtell()) / 2;
 
 	std::u16string u16_str(nameLen + 1, '\0');
-	sar.readBytes(&u16_str[0], nameLen * 2);
+	sar.read(&u16_str[0], nameLen);
 	m_Name = u16_str;
 }
 

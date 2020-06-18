@@ -1,6 +1,7 @@
 #include "openglrenderer.h"
 #include "stb_image.h"
 #include "resource.h"
+#include "debug.h"
 
 #ifdef _USRDLL
 extern HINSTANCE g_hInstDll;
@@ -50,8 +51,12 @@ OpenGLRenderer::OpenGLRenderer()
 	char* fss = getRcdata(m_ctx.hInstance, IDR_SHADER_DEFAULT_FS, fsl);
 	char* atl = getRcdata(m_ctx.hInstance, IDR_TEXTURE_ATLAS, texl);
 
+	initShapeMap();
+
 	int atl_w, atl_h;
-	uint8_t* atl_data = stbi_load_from_memory((uint8_t*)atl, texl, &atl_w, &atl_h, nullptr, 4);
+	int	atl_cmp;
+
+	uint8_t* atl_data = stbi_load_from_memory((uint8_t*)atl, texl, &atl_w, &atl_h, &atl_cmp, 4);
 
 	{
 		std::lock_guard<std::mutex> lock{ m_ctx.mutex };
@@ -63,6 +68,23 @@ OpenGLRenderer::OpenGLRenderer()
 
 		gl::shader s(vss, fss, vsl, fsl);
 		shader = std::move(s);
+
+		glm::mat4 texSelector[4] = {
+			glm::mat4{1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0},
+			glm::mat4{0,1,0,0, 0,1,0,0, 0,1,0,0, 0,1,0,0},
+			glm::mat4{0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0},
+			glm::mat4{1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1},
+		};
+
+		glm::vec4 texMixer[4] = {
+			glm::vec4(1, 1, 1, 0),
+			glm::vec4(1, 1, 1, 0),
+			glm::vec4(1, 1, 1, 0),
+			glm::vec4(0, 0, 0, 0),
+		};
+
+		shader.setUniform("m_TexSelector", texSelector);
+		shader.setUniform("m_TexMixer", texMixer);
 
 		atlas.image2d(atl_w, atl_h, GL_RGBA, GL_UNSIGNED_BYTE, atl_data);
 	}
@@ -79,38 +101,55 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 {
 	// Prepare Data
 
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec4> colors;
-	std::vector<glm::vec2> uvs;
-	std::vector<GLuint> indices;
+	std::vector<glm::vec3>	vertices;
+	std::vector<glm::vec4>	colors;
+	std::vector<glm::vec2>	uvs;
+	std::vector<GLint>		drawMode;
+	std::vector<GLuint>		indices;
 
 	glm::vec2 uv[] = { {0,0},{0,1},{1,0}, {1,1} };
 	uint32_t iv[] = { 1,0,3,3,0,2 };
 	int ic = 0;
 	for (int i = 0; i < sar.numLayers(); i++) {
 		int lid = sar.numLayers() - 1 - i;
-		SarLayer& l = sar.layer(lid);
 
+		SarLayer& l = sar.layer(lid);
 		if (l.hidden())
 			continue;
 
+		auto map_it = m_ShapeMaps.find(l.shape());
+		if (map_it == m_ShapeMaps.end()) {
+			DEBUG_PRINT("Invalid Shape ID: " << l.shape());
+			continue;
+		}
+
+		shape_map map = map_it->second;
+		glm::vec2 uv_offset = glm::vec2(map.x_pos(), map.y_pos());
 		// 0 2
 		// 1 3
+		DEBUG_PRINT("Shape: " << l.shape() << " >> " << map.m_Value);
+		DEBUG_PRINT("Offset: " << unsigned(map.x_pos()) << ", " << unsigned(map.y_pos()));
+		DEBUG_PRINT("Sheet: " << unsigned(map.sheet()));
 		for (int j = 0; j < 4; j++) {
+			// Position
 			glm::vec3 pos{ l.vertex(j).x, l.vertex(j).y, (i + 1) / 512.f };
-
 			vertices.push_back(pos);
+
+			// Color
 			glm::vec4 col(l.red(), l.green(), l.blue(), l.alpha());
 			colors.push_back(col / 255.f);
 
-			int shape = l.shape();
-			int dx = shape % 32;
-			int dy = shape / 32;
+			// UV
 
 			glm::vec2 baseUv = uv[j];
-			baseUv = baseUv + glm::vec2(dx, dy);
-			baseUv = baseUv / 32.f;
+			baseUv = baseUv + uv_offset;
+			baseUv = baseUv / 16.f;
 			uvs.push_back(baseUv);
+
+			// Shape Mod
+			drawMode.push_back(map.sheet());
+
+			DEBUG_PRINT("UVs: " << baseUv.x << ", " << baseUv.y);
 		}
 		for (int j = 0; j < 6; j++) {
 			indices.push_back(iv[j] + (4 * ic));
@@ -132,23 +171,24 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 		std::lock_guard<std::mutex> lock{ m_ctx.mutex };
 
 		gl::framebuffer fbo(texW, texH);
-		gl::framebuffer msaa_fbo(texW, texH);
-
-		shader.setUniform("view", view);
-		shader.setUniform("proj", proj);
+		shader.setUniform("m_View", view);
+		shader.setUniform("m_Proj", proj);
 
 		glActiveTexture(GL_TEXTURE0);
 		atlas.bind(GL_TEXTURE_2D);
-		shader.setUniform("tex", 0);
+		shader.setUniform("m_Tex", 0);
 
 		gl::arraybuffer vbo;
 		vbo.bufferData(&vertices[0], vertices.size(), GL_STATIC_DRAW);
 
-		gl::arraybuffer attr1;
-		attr1.bufferData(&colors[0], colors.size(), GL_STATIC_DRAW);
+		gl::arraybuffer attr_col;
+		attr_col.bufferData(&colors[0], colors.size(), GL_STATIC_DRAW);
 
-		gl::arraybuffer attr2;
-		attr2.bufferData(&uvs[0], uvs.size(), GL_STATIC_DRAW);
+		gl::arraybuffer attr_uv;
+		attr_uv.bufferData(&uvs[0], uvs.size(), GL_STATIC_DRAW);
+
+		gl::arraybuffer attr_mod;
+		attr_mod.bufferData(&drawMode[0], drawMode.size(), GL_STATIC_DRAW);
 
 		gl::elementbuffer ebo;
 		ebo.bufferData(&indices[0], indices.size(), GL_STATIC_DRAW);
@@ -162,18 +202,22 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 		glVertexAttribPointer(0, 3, GL_FLOAT, FALSE, 3 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
 
-		attr1.bind();
+		attr_col.bind();
 		glVertexAttribPointer(1, 4, GL_FLOAT, FALSE, 4 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(1);
 
-		attr2.bind();
+		attr_uv.bind();
 		glVertexAttribPointer(2, 2, GL_FLOAT, FALSE, 2 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(2);
+
+		attr_mod.bind();
+		glVertexAttribIPointer(3, 1, GL_INT, 1 * sizeof(GLint), (void*)0);
+		glEnableVertexAttribArray(3);
 
 		vao.unbind();
 
 		// Draw
-		msaa_fbo.bind();
+		fbo.bind();
 
 		glViewport(0, 0, texW, texH);
 
@@ -185,14 +229,41 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
-		msaa_fbo.unbind();
-
-		msaa_fbo.blit(fbo);
-		fbo.bind();
-
 		glReadPixels(0, 0, texW, texH, GL_BGRA, GL_UNSIGNED_BYTE, bgraData);
 
 		fbo.unbind();
+	}
+}
+
+void OpenGLRenderer::initShapeMap()
+{
+	struct map_offset {
+		uint16_t start;
+		uint16_t end;
+		int16_t offset;
+	};
+
+	map_offset fixups[] = {
+		/*	Start	End		Offset		Shape Set	*/
+		{	0,		79,		0},		//	Characters
+		{	240,	291,	16},	//	Basic Diagram
+		{	320,	358,	0},		//	Lines
+		{	400,	438,	-16},	//	Ink
+		{	480,	516,	32},	//	Gradients
+		{	560,	584,	16},	//	Fractals
+		{	608,	612,	16},	//	Marks
+		{	640,	703,	0},
+		{	720,	753,	240}	//	Pictures 
+	};
+
+	constexpr int num_fixups = sizeof(fixups) / sizeof(map_offset);
+	for (int i = 0; i < num_fixups; i++) {
+		map_offset& fixup = fixups[i];
+		for (uint16_t shape_id = fixup.start; shape_id <= fixup.end; shape_id++) {
+			uint16_t new_id = uint16_t(shape_id + fixup.offset);
+			m_ShapeMaps[shape_id] = { new_id };
+			DEBUG_PRINT("Shape Mapping: " << shape_id << " => " << new_id);
+		}
 	}
 }
 
