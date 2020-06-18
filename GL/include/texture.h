@@ -11,6 +11,7 @@ namespace gl {
 		GLenum BoundTo;
 
 		texture();
+		texture(GLint internalFormat);
 
 		texture(texture&) = delete;
 		texture& operator=(texture&) = delete;
@@ -23,5 +24,7 @@ namespace gl {
 
 		void bind(GLenum target);
 		void unbind();
+	private:
+		GLint internalFormat;
 	};
 }

@@ -3,6 +3,13 @@
 using namespace gl;
 
 texture::texture()
+	:internalFormat(GL_RGBA)
+{
+	glGenTextures(1, &ID);
+}
+
+texture::texture(GLint internalFormat)
+	: internalFormat(internalFormat)
 {
 	glGenTextures(1, &ID);
 }
@@ -42,7 +49,7 @@ void texture::unbind() {
 
 void texture::image2d(int w, int h, GLenum pixelFormat, GLenum pixelType, void* pixelData) {
 	bind(GL_TEXTURE_2D);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, pixelFormat, pixelType, pixelData);
+	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, pixelFormat, pixelType, pixelData);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
