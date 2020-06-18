@@ -50,28 +50,48 @@ int wmain(int argc, LPCWSTR* argv)
 		int newSize;
 		if (fileExists(f)) {
 
-			wcscpy_s(dstName, f);
-			LPWSTR dot = wcsrchr(dstName, L'.');
-			*dot = '\0';
-			wcscat_s(dstName, L".png");
-
-			IStream* tmp;
-			HRESULT hr = SHCreateStreamOnFileW(f, STGM_READ, &tmp);
-			if (!SUCCEEDED(hr)) {
-				std::cout << "Failed to Open SAR File";
-				continue;
-			}
-
-			com_ptr<IStream> stream(tmp);
-
+			
 			std::unique_ptr<SarFile> sar;
 			try {
+				IStream* tmp;
+				HRESULT hr = SHCreateStreamOnFileW(f, STGM_READ, &tmp);
+				if (!SUCCEEDED(hr)) {
+					std::cout << "Failed to Open SAR File";
+					continue;
+				}
+
+				com_ptr<IStream> stream(tmp);
 				sar = std::make_unique<SarFile>(stream.get());
 			}
 			catch (sar_exception& e) {
 				std::cout << e.what() << std::endl;
 				continue;
 			}
+			
+			DEBUG_SCOPE({
+				wcscpy_s(dstName, f);
+				LPWSTR dot = wcsrchr(dstName, L'.');
+				*dot = '\0';
+				wcscat_s(dstName, L".txt");
+
+				FILE* outFile;
+				_wfopen_s(&outFile, dstName, L"wb");
+			
+				for (int i = 0; i < sar->numLayers(); i++) {
+					SarLayer& sl = sar->layer(i);
+					fprintf_s(outFile, "Shape: ", sl.shape());
+					uint16_t shape = sl.shape();
+					for (int i = 0; i < 10; i++) {
+						bool set = shape & (1 << (10 - 1 - i));
+						fprintf_s(outFile, "%d", set ? 1 : 0);
+						if(i == 1 || i == 5)
+							fprintf_s(outFile, "_");
+					}
+					fprintf_s(outFile, " %04d\n", sl.shape());
+				}
+				fclose(outFile);
+			});
+
 
 			int sw = sar->width();
 			int sh = sar->height();
@@ -91,6 +111,11 @@ int wmain(int argc, LPCWSTR* argv)
 				pixel = (pixel >> 8) | (pixel << 24);
 				*p = pixel;
 			}
+
+			wcscpy_s(dstName, f);
+			LPWSTR dot = wcsrchr(dstName, L'.');
+			*dot = '\0';
+			wcscat_s(dstName, L".png");
 
 			FILE* outFile;
 			_wfopen_s(&outFile, dstName, L"wb");
