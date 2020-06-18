@@ -68,8 +68,9 @@ namespace gl {
 		for (int i = 0; i < numUniforms; i++) {
 			int nameLen;
 			glGetActiveUniformName(ID, i, 64, &nameLen, name);
+			int uniformId = glGetUniformLocation(ID, name);
 			uint64_t uniformHash = hashUniformName(name, nameLen);
-			m_Uniforms[uniformHash] = i;
+			m_Uniforms[uniformHash] = uniformId;
 		}
 
 		glDeleteShader(vs);
@@ -121,11 +122,14 @@ namespace gl {
 	uint32_t shader::getUniformLocation(const char* name)
 	{
 		uint64_t uHash = hashUniformName(name);
-		auto id = m_Uniforms.find(uHash);
-		if (id == m_Uniforms.end())
-			throw shader_exception("Invalid Uniform Name");
+		auto id_it = m_Uniforms.find(uHash);
+		int id;
 
-		return id->second;
+		id = id_it != m_Uniforms.end()
+			? id_it->second
+			: glGetUniformLocation(ID, name);
+
+		return id;
 	}
 
 

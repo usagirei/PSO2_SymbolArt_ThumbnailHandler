@@ -30,9 +30,16 @@ namespace gl {
 		void use();
 
 		template<typename V>
-		void setUniform(const char* name, V value);
+		void setUniform(const char* name, const V& value) { _setUniform<V>(name, 1, &value); }
+
+		template<typename V, int Count>
+		void setUniform(const char* name, const V(&values)[Count]) { _setUniform<V>(name, Count, &values[0]); }
 
 	private:
+		template<typename V>
+		void _setUniform(const char* name, int count, const V* ref);
+
+
 		uint64_t hashUniformName(const char* name, int len = 0);
 		uint32_t getUniformLocation(const char* name);
 		
