@@ -63,19 +63,21 @@ STDAPI DllCanUnloadNow(void)
 
 struct REGISTRY_ENTRY
 {
-	HKEY   hkeyRoot;
-	PCWSTR pszKeyName;
-	PCWSTR pszValueName;
-	PCWSTR pszData;
+	HKEY   keyRoot;
+	LPCWSTR keyName;
+	LPCWSTR valueName;
+	DWORD   dataType;
+	DWORD   dataSize;
+	LPCVOID dataPtr;
 };
 
-HRESULT CreateRegKeyAndSetValue(const REGISTRY_ENTRY* pRegistryEntry)
+HRESULT CreateRegKeyAndSetValue(const REGISTRY_ENTRY* pEntry)
 {
 	HKEY hKey;
-	HRESULT hr = HRESULT_FROM_WIN32(RegCreateKeyExW(pRegistryEntry->hkeyRoot, pRegistryEntry->pszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_SET_VALUE, NULL, &hKey, NULL));
+	HRESULT hr = HRESULT_FROM_WIN32(RegCreateKeyExW(pEntry->keyRoot, pEntry->keyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_SET_VALUE, NULL, &hKey, NULL));
 	if (SUCCEEDED(hr))
 	{
-		hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, pRegistryEntry->pszValueName, 0, REG_SZ, (LPBYTE)pRegistryEntry->pszData, ((DWORD)wcslen(pRegistryEntry->pszData) + 1) * sizeof(WCHAR)));
+		hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, pEntry->valueName, 0, pEntry->dataType, (LPBYTE)pEntry->dataPtr, pEntry->dataSize));
 		RegCloseKey(hKey);
 	}
 	return hr;
@@ -93,13 +95,17 @@ STDAPI DllRegisterServer(void)
 	}
 	else
 	{
+		DWORD dwTreatment = 1; // Picture
+		DWORD dwModuleNameLen = wcslen(szModuleName) * sizeof(WCHAR);
 		const REGISTRY_ENTRY rgRegistryEntries[] =
 		{
-			// RootKey				KeyName																								ValueName						Data
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler,										NULL,							HANDLER_DESCRIPTION},
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler L"\\InProcServer32",					NULL,							szModuleName},
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler L"\\InProcServer32",					L"ThreadingModel",				L"Apartment"},
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\" SZ_FORMAT_EXTENSION "\\ShellEx\\{e357fccd-a995-4576-b01f-234630154e96}",		NULL,							SZ_CLSID_ShellExtendionHandler},
+			// RootKey				KeyName																								ValueName				Type		Size,									Data
+			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler,										NULL,					REG_SZ,		sizeof(HANDLER_DESCRIPTION),			HANDLER_DESCRIPTION},
+			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler L"\\InProcServer32",					NULL,					REG_SZ,		dwModuleNameLen,						szModuleName},
+			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler L"\\InProcServer32",					L"ThreadingModel",		REG_SZ,		sizeof(L"Apartment"),					L"Apartment"},
+
+			{HKEY_CURRENT_USER,		L"Software\\Classes\\" SZ_FORMAT_EXTENSION,															L"Treatment",			REG_DWORD,	sizeof(DWORD),							&dwTreatment},
+			{HKEY_CURRENT_USER,		L"Software\\Classes\\" SZ_FORMAT_EXTENSION "\\ShellEx\\{e357fccd-a995-4576-b01f-234630154e96}",		NULL,					REG_SZ,		sizeof(SZ_CLSID_ShellExtendionHandler),	SZ_CLSID_ShellExtendionHandler},
 		};
 
 		hr = S_OK;
@@ -122,7 +128,7 @@ STDAPI DllUnregisterServer(void)
 	const PCWSTR rgpszKeys[] =
 	{
 		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler,
-		L"Software\\Classes\\" SZ_FORMAT_EXTENSION "\\ShellEx\\{e357fccd-a995-4576-b01f-234630154e96}"
+		L"Software\\Classes\\" SZ_FORMAT_EXTENSION "\\ShellEx\\{e357fccd-a995-4576-b01f-234630154e96}",
 	};
 
 	for (int i = 0; i < ARRAYSIZE(rgpszKeys) && SUCCEEDED(hr); i++)
