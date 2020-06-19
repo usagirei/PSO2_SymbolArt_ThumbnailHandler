@@ -81,7 +81,7 @@ IFACEMETHODIMP ThumbnailProvider::GetThumbnail(UINT thumb_size, HBITMAP* phbmp, 
 	}
 
 	int maxDim = __max(sar->width(), sar->height());
-	thumb_size = __min(5 * maxDim, thumb_size);
+	thumb_size = __min(8 * maxDim, thumb_size);
 	
 	int newW = sar->width() * thumb_size / maxDim;
 	int newH = sar->height() * thumb_size / maxDim;
