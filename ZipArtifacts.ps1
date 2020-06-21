@@ -6,4 +6,4 @@ $dllx64 = [System.IO.Path]::Combine($source, "x64", "Release", "Pso2SarThumbnail
 $util   = [System.IO.Path]::Combine($source, "x86", "Release", "SarConvert.exe")
 $script = [System.IO.Path]::Combine("Shared", "install_remove.bat")
 
-Compress-Archive -Path $dllx86 ,$dllx64,$script -DestinationPath $destination -Force
+Compress-Archive -Path $dllx86,$dllx64,$util,$script -DestinationPath $destination -Force
