@@ -44,4 +44,23 @@ namespace gl {
 		use();
 		glUniform1iv(getUniformLocation(name), count, value);
 	}
+
+	template<>
+	inline void shader::_setUniform<bool>(const char* name, int count, const bool* value)
+	{
+		use();
+		if (count <= 16) {
+			GLint tmp[16];
+			for (int i = 0; i < count; i++)
+				tmp[i] = value[i] ? 1 : 0;
+			glUniform1iv(getUniformLocation(name), count, tmp);
+		}
+		else {
+			GLint* tmp = new GLint[count];
+			for (int i = 0; i < count; i++)
+				tmp[i] = value[i] ? 1 : 0;
+			glUniform1iv(getUniformLocation(name), count, tmp);
+			delete[] tmp;
+		}
+	}
 }

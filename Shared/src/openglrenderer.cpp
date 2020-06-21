@@ -2,6 +2,7 @@
 #include "stb_image.h"
 #include "resource.h"
 #include "debug.h"
+#include "..\include\openglrenderer.h"
 
 #ifdef _USRDLL
 extern HINSTANCE g_hInstDll;
@@ -51,7 +52,7 @@ OpenGLRenderer::OpenGLRenderer()
 	char* fss = getRcdata(m_ctx.hInstance, IDR_SHADER_DEFAULT_FS, fsl);
 	char* atl = getRcdata(m_ctx.hInstance, IDR_TEXTURE_ATLAS, texl);
 
-	initShapeMap();
+	initShapeAttrs();
 
 	int atl_w, atl_h;
 	int	atl_cmp;
@@ -85,6 +86,8 @@ OpenGLRenderer::OpenGLRenderer()
 
 		shader.setUniform("m_TexSelector", texSelector);
 		shader.setUniform("m_TexMixer", texMixer);
+		shader.setUniform("m_SdfOffset", 0.3f);
+		shader.setUniform("m_SdfEnable", false);
 
 		atlas.image2d(atl_w, atl_h, GL_RGBA, GL_UNSIGNED_BYTE, atl_data);
 	}
@@ -97,14 +100,12 @@ OpenGLRenderer::~OpenGLRenderer()
 
 }
 
-void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
-{
-	// Prepare Data
+void OpenGLRenderer::Render(SarFile& sar, gl::framebuffer& fbo) {
 
 	std::vector<glm::vec3>	vertices;
 	std::vector<glm::vec4>	colors;
 	std::vector<glm::vec2>	uvs;
-	std::vector<GLint>		drawMode;
+	std::vector<glm::ivec2>	drawMode;
 	std::vector<GLuint>		indices;
 
 	glm::vec2 uv[] = { {0,0},{0,1},{1,0}, {1,1} };
@@ -117,13 +118,13 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 		if (l.hidden())
 			continue;
 
-		auto map_it = m_ShapeMaps.find(l.shape());
-		if (map_it == m_ShapeMaps.end()) {
+		auto map_it = m_ShapeAttrs.find(l.shape());
+		if (map_it == m_ShapeAttrs.end()) {
 			DEBUG_PRINT("Invalid Shape ID: " << l.shape());
 			continue;
 		}
 
-		shape_map map = map_it->second;
+		shape_attr map = map_it->second;
 		glm::vec2 uv_offset = glm::vec2(map.x_pos(), map.y_pos());
 		// 0 2
 		// 1 3
@@ -147,7 +148,7 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 			uvs.push_back(baseUv);
 
 			// Shape Mod
-			drawMode.push_back(map.sheet());
+			drawMode.push_back(glm::ivec2(map.sheet(), map.sdf() ? 1 : 0));
 
 			DEBUG_PRINT("UVs: " << baseUv.x << ", " << baseUv.y);
 		}
@@ -165,12 +166,9 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 	float halfH = sar.height() / 2.f;
 	glm::mat4 proj = glm::ortho(-halfW - 0.5f, halfW - 0.5f, -halfH - 0.5f, halfH - 0.5f);
 
-
-	// OpenGL Drawing
 	{
 		std::lock_guard<std::mutex> lock{ m_ctx.mutex };
 
-		gl::framebuffer fbo(texW, texH);
 		shader.setUniform("m_View", view);
 		shader.setUniform("m_Proj", proj);
 
@@ -211,7 +209,7 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 		glEnableVertexAttribArray(2);
 
 		attr_mod.bind();
-		glVertexAttribIPointer(3, 1, GL_INT, 1 * sizeof(GLint), (void*)0);
+		glVertexAttribIPointer(3, 2, GL_INT, 2 * sizeof(GLint), (void*)0);
 		glEnableVertexAttribArray(3);
 
 		vao.unbind();
@@ -219,7 +217,7 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 		// Draw
 		fbo.bind();
 
-		glViewport(0, 0, texW, texH);
+		glViewport(0, 0, fbo.width, fbo.height);
 
 		glClearColor(1, 1, 1, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -229,41 +227,74 @@ void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
 
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
-		glReadPixels(0, 0, texW, texH, GL_BGRA, GL_UNSIGNED_BYTE, bgraData);
-
 		fbo.unbind();
 	}
 }
 
-void OpenGLRenderer::initShapeMap()
+void OpenGLRenderer::SetFlag(int flag, bool value)
 {
-	struct map_offset {
+	switch (flag) {
+	case FLAG_HD:
+	{
+		std::lock_guard<std::mutex> lock{ m_ctx.mutex };
+		shader.use();
+		shader.setUniform("m_SdfEnable", value);
+	}
+	break;
+	}
+}
+
+void OpenGLRenderer::Render(SarFile& sar, int texW, int texH, void* bgraData)
+{
+	gl::framebuffer fbo(texW, texH);
+
+	Render(sar, fbo);
+
+	fbo.bind();
+	glReadPixels(0, 0, texW, texH, GL_BGRA, GL_UNSIGNED_BYTE, bgraData);
+	fbo.unbind();
+}
+
+void OpenGLRenderer::initShapeAttrs()
+{
+	struct shape_attr_info {
 		uint16_t start;
 		uint16_t end;
 		int16_t offset;
+		bool sdfEnabled;
 	};
 
-	map_offset fixups[] = {
-		/*	Start	End		Offset		Shape Set	*/
-		{	0,		79,		0},		//	Characters
-		{	240,	291,	16},	//	Basic Diagram
-		{	320,	358,	0},		//	Lines
-		{	400,	438,	-16},	//	Ink
-		{	480,	516,	32},	//	Gradients
-		{	560,	584,	16},	//	Fractals
-		{	608,	612,	16},	//	Marks
-		{	640,	703,	0},
-		{	720,	753,	240}	//	Pictures 
+	shape_attr_info attrs[] = {
+		/*	Start	End		Offset	SDF		Shape Set	*/
+		{	0,		79,		0,		true},	//	Characters
+		{	240,	291,	16,		true},	//	Basic Diagram
+		{	320,	358,	0,		true},	//	Lines
+		{	400,	438,	-16,	true},	//	Ink
+		{	480,	516,	32,		false},	//	Gradients
+		{	560,	584,	16,		true},	//	Fractals
+		{	608,	612,	16,		true},	//	Marks
+		{	640,	703,	0,		true},
+		{	720,	753,	240,	false}	//	Pictures 
 	};
 
-	constexpr int num_fixups = sizeof(fixups) / sizeof(map_offset);
-	for (int i = 0; i < num_fixups; i++) {
-		map_offset& fixup = fixups[i];
-		for (uint16_t shape_id = fixup.start; shape_id <= fixup.end; shape_id++) {
-			uint16_t new_id = uint16_t(shape_id + fixup.offset);
-			m_ShapeMaps[shape_id] = { new_id };
+	uint16_t blacklist[] = {
+		560 + 8, 560 + 20, 560 + 21, 560 + 22, 560 + 23, 560 + 24  // Some Fractals
+	};
+
+	constexpr int num_attrs = sizeof(attrs) / sizeof(shape_attr_info);
+	for (int i = 0; i < num_attrs; i++) {
+		shape_attr_info& attr = attrs[i];
+		for (uint16_t shape_id = attr.start; shape_id <= attr.end; shape_id++) {
+			uint16_t new_id = uint16_t(shape_id + attr.offset);
+			m_ShapeAttrs[shape_id] = { new_id, attr.sdfEnabled };
 			DEBUG_PRINT("Shape Mapping: " << shape_id << " => " << new_id);
 		}
+	}
+
+	constexpr int num_blacklisted = sizeof(blacklist) / sizeof(uint16_t);
+	for (int i = 0; i < num_blacklisted; i++) {
+		uint16_t shape = blacklist[i];
+		m_ShapeAttrs[shape].m_EnableSdf = false;
 	}
 }
 
