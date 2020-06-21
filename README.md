@@ -4,10 +4,19 @@ Shell Extension for Windows Explorer to display Symbol Art file thumbnails and i
 
 Makes it straightforward to browse your cache and pick which ones you want to import from windows explorer itself
 
+Also a .Sar -> .Png converting utility, with optional high-resolution rendering
+
 <details>
   <summary>Sample Screenshot</summary>
 
 ![image](https://user-images.githubusercontent.com/12700106/85083909-95db7b80-b1a9-11ea-9d21-f950beab3a27.png)
+
+</details>
+
+<details>
+  <summary>Sample High-Res Rendering of the above screenshot</summary>
+  
+  ![image](https://user-images.githubusercontent.com/12700106/85217232-c9163a00-b364-11ea-936e-eac10637e53a.png)
 
 </details>
 
@@ -63,7 +72,7 @@ Included in the release download, you can use it to test if the thumbnail handle
 Droping one or more .sar files into the executable will create a 1:1 (usually 192x96, or 32x32) .png file of it, 
 For precise size control, run it from a command prompt or script file
 
-Passing a number as parameter will change the out size for the subsequent arguments
+Passing a number as parameter will change the out size for the subsequent arguments, if this number is negative, high-resolution rendering will be done, see images above for an example.
 
 Examples:
 
@@ -72,6 +81,9 @@ will create 512px .pngs
 
 `SarConvert.exe 512 input1.sar 768 input2.sar 1024 input3.sar`
 will create 512, 768, and 1024px pngs respectively
+
+`SarConvert.exe -512 input.sar 512 input.sar`
+will create a hd and a non-hd 512px png respectively
 
 ------
 
