@@ -40,9 +40,17 @@ using com_ptr = std::unique_ptr<T, ComDeleter>;
 int wmain(int argc, LPCWSTR* argv)
 {
 	WCHAR dstName[MAX_PATH];
-	OpenGLRenderer renderer;
+	std::unique_ptr<OpenGLRenderer> renderer;
+	try {
+		renderer = std::make_unique<OpenGLRenderer>();
+	}
+	catch (std::exception& e) {
+		std::cout << e.what() << std::endl;
+		exit(1);
+	}
 	std::vector<uint32_t> buf;
 	int targetSize = 0;
+	bool renderHd = false;
 
 	for (int i = 1; i < argc; i++) {
 
@@ -50,7 +58,7 @@ int wmain(int argc, LPCWSTR* argv)
 		int newSize;
 		if (fileExists(f)) {
 
-			
+
 			std::unique_ptr<SarFile> sar;
 			try {
 				IStream* tmp;
@@ -67,16 +75,16 @@ int wmain(int argc, LPCWSTR* argv)
 				std::cout << e.what() << std::endl;
 				continue;
 			}
-			
+
 			DEBUG_SCOPE({
 				wcscpy_s(dstName, f);
 				LPWSTR dot = wcsrchr(dstName, L'.');
 				*dot = '\0';
 				wcscat_s(dstName, L".txt");
 
-				FILE* outFile;
+				FILE * outFile;
 				_wfopen_s(&outFile, dstName, L"wb");
-			
+
 				for (int i = 0; i < sar->numLayers(); i++) {
 					SarLayer& sl = sar->layer(i);
 					fprintf_s(outFile, "Shape: ", sl.shape());
@@ -84,7 +92,7 @@ int wmain(int argc, LPCWSTR* argv)
 					for (int i = 0; i < 10; i++) {
 						bool set = shape & (1 << (10 - 1 - i));
 						fprintf_s(outFile, "%d", set ? 1 : 0);
-						if(i == 1 || i == 5)
+						if (i == 1 || i == 5)
 							fprintf_s(outFile, "_");
 					}
 					fprintf_s(outFile, " %04d\n", sl.shape());
@@ -95,7 +103,7 @@ int wmain(int argc, LPCWSTR* argv)
 
 			int sw = sar->width();
 			int sh = sar->height();
-			if (targetSize) {
+			if (targetSize != 0) {
 				int maxDim = __max(sw, sh);
 				sw = sw * targetSize / maxDim;
 				sh = sh * targetSize / maxDim;
@@ -103,7 +111,8 @@ int wmain(int argc, LPCWSTR* argv)
 
 			int numPixels = sw * sh;
 			buf.resize(numPixels);
-			renderer.Render(*sar, sw, sh, &buf[0]);
+			renderer->SetFlag(OpenGLRenderer::FLAG_HD, renderHd);
+			renderer->Render(*sar, sw, sh, &buf[0]);
 
 			for (auto p = buf.begin(); p < buf.end(); p++) {
 				uint32_t pixel = *p;
@@ -125,7 +134,8 @@ int wmain(int argc, LPCWSTR* argv)
 
 		}
 		else if ((newSize = wcstol(f, nullptr, 10)) != 0) {
-			targetSize = newSize < 0 ? 0 : newSize;
+			targetSize = abs(newSize);
+			renderHd = newSize < 0;
 		}
 	}
 }
