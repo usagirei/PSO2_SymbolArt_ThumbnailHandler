@@ -124,6 +124,17 @@ int wmain(int argc, LPCWSTR* argv)
 			wcscpy_s(dstName, f);
 			LPWSTR dot = wcsrchr(dstName, L'.');
 			*dot = '\0';
+
+			if (targetSize) {
+				WCHAR strbuf[64];
+				swprintf_s(strbuf, L"_%d", targetSize);
+				wcscat_s(dstName, strbuf);
+			}
+
+			if(renderHd) {
+				wcscat_s(dstName, L"_hd");
+			}
+
 			wcscat_s(dstName, L".png");
 
 			FILE* outFile;
