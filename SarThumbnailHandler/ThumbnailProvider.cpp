@@ -4,6 +4,9 @@
 #include <memory>
 
 #include "openglrenderer.h"
+#include "config.h"
+#include "debug.h"
+#include "registry.h"
 
 ThumbnailProvider::ThumbnailProvider()
 	: m_cRef(1), m_pStream(nullptr)
@@ -72,6 +75,9 @@ extern void __hexdump(void* d, int l);
 
 IFACEMETHODIMP ThumbnailProvider::GetThumbnail(UINT thumb_size, HBITMAP* phbmp, WTS_ALPHATYPE* pdwAlpha)
 {
+	DEBUG_LAUNCH();
+	DEBUG_PRINT("Request Thumbnail: " << thumb_size);
+
 	std::unique_ptr<SarFile> sar;
 	try {
 		sar = std::make_unique<SarFile>(m_pStream);
@@ -80,11 +86,15 @@ IFACEMETHODIMP ThumbnailProvider::GetThumbnail(UINT thumb_size, HBITMAP* phbmp, 
 		return E_FAIL;
 	}
 
+	
+
 	int maxDim = __max(sar->width(), sar->height());
 	thumb_size = __min(8 * maxDim, thumb_size);
 	
 	int newW = sar->width() * thumb_size / maxDim;
 	int newH = sar->height() * thumb_size / maxDim;
+
+	bool isThumbHighRes = thumb_size > 256;
 
 	BITMAPINFO bmi = {};
 	bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
@@ -110,6 +120,14 @@ IFACEMETHODIMP ThumbnailProvider::GetThumbnail(UINT thumb_size, HBITMAP* phbmp, 
 		}
 	}
 
+	DWORD highDefEnabled;
+	HRESULT hr = registry::RegistryGetValue(HKEY_CURRENT_USER, L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler, L"HighDefinition", &highDefEnabled);
+	if (!SUCCEEDED(hr))
+		highDefEnabled = 0;
+
+	bool renderInHd = isThumbHighRes && (highDefEnabled != 0);
+
+	g_pSarRenderer->SetFlag(OpenGLRenderer::FLAG_HD, renderInHd);
 	g_pSarRenderer->Render(*sar, newW, newH, pBits);
 
 	*pdwAlpha = WTSAT_ARGB;

@@ -42,6 +42,15 @@ reg query "HKCR\CLSID" | find /i "{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}" > NUL 
 :INSTALL
 echo Installing Thumbnail Handler (%OS%)
 regsvr32 Pso2SarThumbnailHandler.%OS%.dll
+
+choice /c yn /t 30 /d n /m "Enable High Resolution Rendering?"
+if %errorlevel% == 1 (
+   reg add "HKCR\CLSID\{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}" /v "HighDefinition" /t REG_DWORD /d 1 /f
+) else (
+   reg add "HKCR\CLSID\{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}" /v "HighDefinition" /t REG_DWORD /d 0 /f
+)
+
+
 goto END
 :REMOVE
 echo Removing Thumbnail Handler (%OS%)

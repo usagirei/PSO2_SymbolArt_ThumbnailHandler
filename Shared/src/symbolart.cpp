@@ -61,12 +61,16 @@ SarFile::SarFile(IStream* stream)
 	sar.rseek(4, SEEK_SET);
 	sar.read<SarHeader>(&m_Header, 1);
 
+#ifndef  _USRDLL
+
 	DEBUG_SCOPE({
 		FILE * fp;
 		fopen_s(&fp, "dump.bin", "wb");
 		fwrite((uint8_t*)sar, 1, sar.size(), fp);
 		fclose(fp);
 	});
+
+#endif //  _USRDLL
 
 	DEBUG_HEXDUMP_E(m_Header);
 	DEBUG_BINDUMP_E(m_Header);

@@ -208,6 +208,7 @@ POPD</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ClassFactory.h" />
+    <ClInclude Include="registry.h" />
     <ClInclude Include="resource_th.h" />
     <ClInclude Include="ThumbnailProvider.h" />
     <ClInclude Include="version.h" />

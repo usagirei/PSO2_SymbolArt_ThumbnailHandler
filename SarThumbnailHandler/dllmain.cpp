@@ -7,6 +7,7 @@
 
 #include "config.h"
 #include "debug.h"
+#include "registry.h"
 
 
 HINSTANCE  g_hInstDll = NULL;
@@ -85,7 +86,7 @@ HRESULT CreateRegKeyAndSetValue(const REGISTRY_ENTRY* pEntry)
 
 STDAPI DllRegisterServer(void)
 {
-	HRESULT hr;
+	HRESULT hr = S_OK;
 
 	WCHAR szModuleName[MAX_PATH];
 
@@ -95,29 +96,21 @@ STDAPI DllRegisterServer(void)
 	}
 	else
 	{
-		DWORD dwTreatment = 1; // Picture
-		DWORD dwModuleNameLen = wcslen(szModuleName) * sizeof(WCHAR);
-		const REGISTRY_ENTRY rgRegistryEntries[] =
-		{
-			// RootKey				KeyName																								ValueName				Type		Size,									Data
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler,										NULL,					REG_SZ,		sizeof(HANDLER_DESCRIPTION),			HANDLER_DESCRIPTION},
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler L"\\InProcServer32",					NULL,					REG_SZ,		dwModuleNameLen,						szModuleName},
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler L"\\InProcServer32",					L"ThreadingModel",		REG_SZ,		sizeof(L"Apartment"),					L"Apartment"},
+		//DEBUG_LAUNCH();
+		registry::RegistrySetValue(HKEY_CURRENT_USER, L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler, NULL, HANDLER_DESCRIPTION);
+		registry::RegistrySetValue<DWORD>(HKEY_CURRENT_USER, L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler, L"HighDefinition", 0);
+		registry::RegistrySetValue(HKEY_CURRENT_USER, L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler L"\\InProcServer32", NULL, szModuleName);
+		registry::RegistrySetValue(HKEY_CURRENT_USER, L"Software\\Classes\\CLSID\\" SZ_CLSID_ShellExtendionHandler L"\\InProcServer32", L"ThreadingModel", L"Apartment");
 
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\" SZ_FORMAT_EXTENSION,															L"Treatment",			REG_DWORD,	sizeof(DWORD),							&dwTreatment},
-			{HKEY_CURRENT_USER,		L"Software\\Classes\\" SZ_FORMAT_EXTENSION "\\ShellEx\\{e357fccd-a995-4576-b01f-234630154e96}",		NULL,					REG_SZ,		sizeof(SZ_CLSID_ShellExtendionHandler),	SZ_CLSID_ShellExtendionHandler},
-		};
-
-		hr = S_OK;
-		for (int i = 0; i < ARRAYSIZE(rgRegistryEntries) && SUCCEEDED(hr); i++)
-		{
-			hr = CreateRegKeyAndSetValue(&rgRegistryEntries[i]);
-		}
+		registry::RegistrySetValue<DWORD>(HKEY_CURRENT_USER, L"Software\\Classes\\" SZ_FORMAT_EXTENSION, L"Treatment", 1);
+		registry::RegistrySetValue(HKEY_CURRENT_USER, L"Software\\Classes\\" SZ_FORMAT_EXTENSION "\\ShellEx\\{e357fccd-a995-4576-b01f-234630154e96}", NULL, SZ_CLSID_ShellExtendionHandler);
 	}
+
 	if (SUCCEEDED(hr))
 	{
 		SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 	}
+
 	return hr;
 }
 
@@ -133,11 +126,9 @@ STDAPI DllUnregisterServer(void)
 
 	for (int i = 0; i < ARRAYSIZE(rgpszKeys) && SUCCEEDED(hr); i++)
 	{
-		hr = HRESULT_FROM_WIN32(RegDeleteTreeW(HKEY_CURRENT_USER, rgpszKeys[i]));
+		hr = registry::RegistryDeleteTree(HKEY_CURRENT_USER, rgpszKeys[i]);
 		if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
-		{
 			hr = S_OK;
-		}
 	}
 	return hr;
 }
