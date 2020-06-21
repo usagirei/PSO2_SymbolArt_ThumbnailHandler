@@ -84,6 +84,14 @@ HKEY_CLASSES_ROOT/CLSID/**{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}**|(Default)|REG
 HKEY_CLASSES_ROOT/CLSID/**{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}**/InProcServer32|(Default)|REG_SZ|\<Full Path to the Handler DLL\>
 HKEY_CLASSES_ROOT/CLSID/**{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}**/InProcServer32|ThreadingModel|REG_SZ|Apartment
 
+The Path to the DLL Handler **should match your operating system architecture**, in the case it does not, the install script is probably detecting the wrong architecture, in which case, open an issue (or comment if one is already opened for this reason) and post the values from the following entries under
+
+* HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0\
+  * Identifier
+  * ProcessorNameString
+
+So i can try and find a more reliable way to detect system architecture
+
 ---
 **Q.** Still Nothing
 
