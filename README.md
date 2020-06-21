@@ -84,6 +84,18 @@ HKEY_CLASSES_ROOT/CLSID/**{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}**|(Default)|REG
 HKEY_CLASSES_ROOT/CLSID/**{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}**/InProcServer32|(Default)|REG_SZ|\<Full Path to the Handler DLL\>
 HKEY_CLASSES_ROOT/CLSID/**{63424DF1-FAA8-4598-97E5-6E95D4A4ED67}**/InProcServer32|ThreadingModel|REG_SZ|Apartment
 
+---
+**Q.** Still Nothing
+
+**A.** Try running the *Windows SDK ThumbnailProvider Test Utility* [(Download)](https://github.com/usagirei/PSO2_SymbolArt_ThumbnailHandler/releases/download/untagged-09451b8a9dbd6419a421/WinSDK_ThumbnailProvider.zip):
+
+`ThumbnailProvider.<arch>.exe <Path to a .sar file> <thumbnail size, 256 for example>` 
+
+Try both the x64 and x86 variants:
+  * On a x64 system, if you get a thumbnail with the x86 tester but not with the x64 one, or the inverse as well, the wrong dll is being registered by the install script, so try the manual installation.
+  * If you don't get a window showing the thumbnail and the command just exits, the handler is probably not being registered, so check the above entries on the registry
+  * If you do get a thumbnail in the tester, but not on windows explorer, try enabling the preview pane, also the thumbnails won't show on: Small icons, List, and Details view modes, try Medium/Large/Extra Large Icons, or Tiles/Content
+
 ------
 
 <a name="msvcrt">1</a>: Visual C++ 2019 Runtime: [x86](https://aka.ms/vs/16/release/vc_redist.x86.exe) / [x64](https://aka.ms/vs/16/release/vc_redist.x64.exe)
