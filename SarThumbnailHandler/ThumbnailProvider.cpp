@@ -94,7 +94,7 @@ IFACEMETHODIMP ThumbnailProvider::GetThumbnail(UINT thumb_size, HBITMAP* phbmp, 
 	int newW = sar->width() * thumb_size / maxDim;
 	int newH = sar->height() * thumb_size / maxDim;
 
-	bool isThumbHighRes = thumb_size > 256;
+	bool isThumbHighRes = thumb_size >= 256;
 
 	BITMAPINFO bmi = {};
 	bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
