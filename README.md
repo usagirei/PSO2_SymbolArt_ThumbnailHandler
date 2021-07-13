@@ -41,8 +41,8 @@ Or
 
 * Open a Command Prompt as administrator 
 * CD into the folder with the dll file
-* run `regsrv32 Pso2SarThumbnailHandler.x64.dll` or `regsrv32 Pso2SarThumbnailHandler.x86.dll` to install
-* run `regsrv32 /u Pso2SarThumbnailHandler.x64.dll` or `regsrv32 /u Pso2SarThumbnailHandler.x86.dll` to remove
+* run `regsvr32 Pso2SarThumbnailHandler.x64.dll` or `regsvr32 Pso2SarThumbnailHandler.x86.dll` to install
+* run `regsvr32 /u Pso2SarThumbnailHandler.x64.dll` or `regsvr32 /u Pso2SarThumbnailHandler.x86.dll` to remove
 
 # SarConvert Utility
 
